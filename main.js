@@ -10,7 +10,7 @@ function draw() {
     fill(255);
     stroke(0);
     strokeWeight(4);
-    text('this is a javascript sketch', width / 2, height / 2);
+    text('this is a javascript sketch I EDITED THIS', width / 2, height / 2);
 
 }
 
