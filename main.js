@@ -1,11 +1,19 @@
 var canvas;
+let volume;
+let mic;
+
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
+    mic = new p5.AudioIn();
+    mic.start();
 }
 
+
 function draw() {
-    background(150);
+    volume = mic.getLevel()*255;
+    console.log("Volume = "+volume);
+    background(volume);
     textSize(32);
     fill(255);
     stroke(0);
