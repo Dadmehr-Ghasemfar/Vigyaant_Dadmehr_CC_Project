@@ -1,60 +1,72 @@
-let audioContext, analyser, dataArray;
-let volume = 0;
-let micStarted = false;
+let volume;
+let mic;
+let audioStarted = false; // A flag to track if audio has started
 
 function setup() {
-    startMic();
-    createCanvas(400, 400);
-    textAlign(CENTER, CENTER);
-    textSize(18);
-}
+    createCanvas(windowWidth, windowHeight);
+    // Initialize mic, but don't start it yet.
+    // We'll start it after a user gesture.
+    mic = new p5.AudioIn();
 
-function draw() {
-<<<<<<< HEAD
-    volume = mic.getLevel();
-    volume = volume*225;
-    console.log("Volume = "+volume);
-    background(volume);
+    // Set initial background to black or some neutral color
+    background(0);
     textSize(32);
+    textAlign(CENTER, CENTER); // Center the text horizontally and vertically
     fill(255);
     stroke(0);
     strokeWeight(4);
-    text('this is a javascript sketch I EDITED THIS', width / 2, height / 2);
-=======
-    background(240);
->>>>>>> 9ffd944ea0d42e35316ce22e662df6bb21dcc5fd
-
-    if (!micStarted) {
-        return;
-    }
-
-    analyser.getByteTimeDomainData(dataArray);
-
-    // Compute volume as RMS
-    let sumSquares = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-        const val = dataArray[i] - 128;
-        sumSquares += val * val;
-    }
-    volume = Math.sqrt(sumSquares / dataArray.length) * 4;
-
-    // Draw a circle that changes with volume
-    fill(100, 180, 255);
-    circle(width / 2, height / 2, volume + 100);
+    text('Click or Press a Key to Enable Mic', width / 2, height / 2);
 }
 
-async function startMic() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true
-    });
-    audioContext = new(window.AudioContext || window.webkitAudioContext)();
-    const source = audioContext.createMediaStreamSource(stream);
+function draw() {
+    if (audioStarted) {
+        volume = mic.getLevel();
+        volume = volume * 255; // Scale to 0-255 for grayscale background
+        // console.log("Volume = " + volume); // Uncomment for debugging
+        background(volume); // Use volume for grayscale background
 
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
+        // Display the text after audio has started
+        textSize(32);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        stroke(0);
+        strokeWeight(4);
+        text('Sound Reactive Sketch!', width / 2, height / 2);
+    } else {
+        // If audio hasn't started, keep showing the instruction
+        background(0); // Black background
+        textSize(32);
+        textAlign(CENTER, CENTER);
+        fill(255);
+        stroke(0);
+        strokeWeight(4);
+        text('Click or Press a Key to Enable Mic', width / 2, height / 2);
+    }
+}
 
-    source.connect(analyser);
-    micStarted = true;
+// Function to handle a mouse click
+function mousePressed() {
+    // Check if audio hasn't started yet
+    if (!audioStarted) {
+        userStartAudio(); // Important: This resolves the browser's audio context suspension
+        mic.start();      // Start the microphone
+        audioStarted = true; // Set the flag to true
+        console.log("Audio started via mouse click!");
+    }
+}
+
+// Function to handle a key press
+function keyPressed() {
+    // Check if audio hasn't started yet
+    if (!audioStarted) {
+        userStartAudio(); // Important: This resolves the browser's audio context suspension
+        mic.start();      // Start the microphone
+        audioStarted = true; // Set the flag to true
+        console.log("Audio started via key press!");
+    }
+}
+
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
 }
