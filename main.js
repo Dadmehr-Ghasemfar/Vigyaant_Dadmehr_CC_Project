@@ -11,7 +11,8 @@ function setup() {
 
 
 function draw() {
-    volume = mic.getLevel()*255;
+    volume = mic.getLevel();
+    volume = volume*225;
     console.log("Volume = "+volume);
     background(volume);
     textSize(32);
