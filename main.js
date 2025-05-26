@@ -1,6 +1,6 @@
-let volume;
-let mic;
-let audioStarted = false; // A flag to track if audio has started
+var volume;
+var mic;
+var audioStarted = false; // A flag to track if audio has started
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
