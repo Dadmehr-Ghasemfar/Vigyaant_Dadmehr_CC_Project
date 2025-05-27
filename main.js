@@ -10,7 +10,7 @@ function setup() {
 }
 
 function draw() {
-    background(240);
+    background(255);
 
     if (!micStarted) {
         return;
@@ -29,6 +29,7 @@ function draw() {
     // Draw a circle that changes with volume
     fill(100, 180, 255);
     circle(width / 2, height / 2, volume + 100);
+    console.log(volume);
 }
 
 async function startMic() {
@@ -36,6 +37,7 @@ async function startMic() {
         audio: true
     });
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    await audioContext.resume();
     const source = audioContext.createMediaStreamSource(stream);
 
     analyser = audioContext.createAnalyser();
