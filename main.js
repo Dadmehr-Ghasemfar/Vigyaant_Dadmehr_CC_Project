@@ -4,32 +4,36 @@ let micStarted = false;
 
 function setup() {
     startMic();
-    createCanvas(400, 400);
+    createCanvas(windowWidth, windowHeight);
+
     textAlign(CENTER, CENTER);
     textSize(18);
 }
 
 function draw() {
-    background(255);
+    background(150);
 
-    if (!micStarted) {
-        return;
+    if (micStarted) {
+        analyser.getByteTimeDomainData(dataArray);
+
+        // Compute volume as RMS
+        volume = calc_volume();
+
+        // Draw a circle that changes with volume
+        fill(100, 180, 255);
+        circle(width / 2, height / 2, 10*volume + 100);
+        console.log(volume);
     }
+}
 
-    analyser.getByteTimeDomainData(dataArray);
-
-    // Compute volume as RMS
+function calc_volume() {
     let sumSquares = 0;
     for (let i = 0; i < dataArray.length; i++) {
         const val = dataArray[i] - 128;
         sumSquares += val * val;
     }
     volume = Math.sqrt(sumSquares / dataArray.length) * 4;
-
-    // Draw a circle that changes with volume
-    fill(100, 180, 255);
-    circle(width / 2, height / 2, volume + 100);
-    console.log(volume);
+    return volume;
 }
 
 async function startMic() {
