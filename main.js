@@ -1,7 +1,8 @@
 let audioContext, analyser, dataArray;
-
+let graph_button;
 let volume = 0;
 let micStarted = false;
+let showGraph = false; 
 
 let sound_log = [];
 const log_length_time = 5;
@@ -10,14 +11,16 @@ max_volume = 75;
 function setup() {
     start_microphone();
     createCanvas(windowWidth, windowHeight);
-
     textAlign(CENTER, CENTER);
     textSize(18);
-    volume_plot_color = color(255, 0, 0);
+    volume_plot_color = color(1, 50, 32);
+    graph_button = createButton("Click HERE for SOUND GRAPH");
+    graph_button.position(230, 25);
+    graph_button.mouseClicked(toggleGraph);
 }
 
 function draw() {
-    background(150);
+    background(123, 63, 0);
 
     if (micStarted) {
         analyser.getByteTimeDomainData(dataArray);
@@ -27,6 +30,7 @@ function draw() {
         if ((sound_log[sound_log.length - 1][0] - sound_log[0][0]) > log_length_time * 1000) {
             sound_log.shift();
         }
+<<<<<<< HEAD
 
         if (volume > max_volume) {
             //max_volume = volume;
@@ -46,6 +50,20 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     textAlign(CENTER, CENTER);
     textSize(12);
     strokeWeight(2);
+=======
+        if(showGraph){
+        draw_graph(sound_log, 20, 100, 900, 600, volume_plot_color);
+        }
+    }
+}
+
+function toggleGraph() {
+    showGraph = !showGraph; // Invert the boolean value
+}
+
+function draw_graph(data, x_pos, y_pos, width, height, line_color) {
+    let padding = 20;
+>>>>>>> 42ad854924c354753535bb2e7980f5b288c96c0c
 
     let xVals = data.map(d => d[0]);
     let yVals = data.map(d => d[1]);
@@ -104,7 +122,9 @@ async function start_microphone() {
     const stream = await navigator.mediaDevices.getUserMedia({
         audio: true
     });
+    /* jshint -W056 */
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    /* jshint +W056 */
     await audioContext.resume();
     const source = audioContext.createMediaStreamSource(stream);
 
