@@ -47,8 +47,10 @@ function draw() {
                 "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
                 "Now", "T-5", max_volume.toString(), "0");
 
-            analyser.getByteFrequencyData(frequencyData);
-            draw_fft_plot(frequencyData, 600, 250, 400, 300, color(100, 200, 255), "Live Frequency Spectrum");
+            let frequencyData = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(frequencyData);
+            let max_x_title = (sampling_rate / 2).toFixed(0) + " Hz";
+            draw_fft_plot(frequencyData, 600, 200, 400, 300, color(100, 200, 255), "Live Frequency Spectrum", "Frequency", "Magnitude", max_x_title, "0 Hz", "max dB", "min dB");
         }
     }
 }
@@ -59,17 +61,18 @@ async function start_microphone() {
     });
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
+    sampling_rate = audioContext.sampleRate;
 
-    const source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
+const source = audioContext.createMediaStreamSource(stream);
+analyser = audioContext.createAnalyser();
+analyser.fftSize = 256;
 
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-    frequencyData = new Uint8Array(bufferLength);
+const bufferLength = analyser.frequencyBinCount;
+dataArray = new Uint8Array(bufferLength);
+frequencyData = new Uint8Array(bufferLength);
 
-    source.connect(analyser);
-    micStarted = true;
+source.connect(analyser);
+micStarted = true;
 }
 
 function calculate_volume() {
@@ -123,7 +126,11 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     noStroke();
     text(title, x_pos + width / 2, y_pos + 30);
     text(x_axis_title, x_pos + width / 2, y_pos + height);
-    text(y_axis_title, x_pos - 30, y_pos + height / 2);
+    push();
+    translate(x_pos + padding - 30, y_pos + height / 2);
+    rotate(-HALF_PI);
+    text(y_axis_title, 0, 0);
+    pop();
 
     textSize(12);
     text(min_x_title, x_pos + padding, y_pos + height - padding + 15);
@@ -132,23 +139,30 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     text(min_y_title, x_pos + padding - 25, y_pos + height - padding);
 }
 
-function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color, title) {
-    let padding = 20;
+function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
+    title, x_axis_title, y_axis_title, max_x_title, min_x_title, max_y_title, min_y_title
+) {
+    let padding = 40;
     let numBars = frequencyData.length;
     let barWidth = (width - 2 * padding) / numBars;
 
-    // Axes
-    stroke(0);
+    textAlign(CENTER, CENTER);
+    textSize(12);
     strokeWeight(2);
+
+    // Draw axes
+    stroke(0);
     line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
     line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
 
-    // Bars
+    // Draw bars
     noStroke();
     fill(bar_color);
     for (let i = 0; i < numBars; i++) {
-        let amplitude = frequencyData[i];
-        let scaledHeight = map(amplitude, 0, 255, 0, height - 2 * padding);
+        let db = frequencyData[i];
+        let scaledHeight = map(db, analyser.minDecibels, analyser.maxDecibels, 0, height - 2 * padding);
+        scaledHeight = max(scaledHeight, 0);
+        console.log("max dB = "+analyser.maxDecibels);
         rect(
             x_pos + padding + i * barWidth,
             y_pos + height - padding - scaledHeight,
@@ -157,10 +171,24 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color, ti
         );
     }
 
-    // Title
+    // Draw labels
     fill(0);
     noStroke();
-    textAlign(CENTER, TOP);
-    textSize(14);
-    text(title, x_pos + width / 2, y_pos);
+    textSize(20);
+
+    // Titles
+    text(title, x_pos + width / 2, y_pos + 30);
+    text(x_axis_title, x_pos + width / 2, y_pos + height - padding + 30);
+    push();
+    translate(x_pos + padding - 30, y_pos + height / 2);
+    rotate(-HALF_PI);
+    text(y_axis_title, 0, 0);
+    pop();
+
+    // Min/Max axis values
+    textSize(12);
+    text(min_x_title, x_pos + padding, y_pos + height - padding + 15);
+    text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
+    text(min_y_title, x_pos + padding - 20, y_pos + height - padding);
+    text(max_y_title, x_pos + padding - 20, y_pos + padding);
 }
