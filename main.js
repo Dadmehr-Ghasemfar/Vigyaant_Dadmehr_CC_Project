@@ -15,7 +15,7 @@ function setup() {
     textSize(18);
     volume_plot_color = color(1, 50, 32);
     graph_button = createButton("Click HERE for SOUND GRAPH");
-    graph_button.position(230, 25);
+    graph_button.position(530, 25);
     graph_button.mouseClicked(toggleGraph);
 }
 
@@ -37,7 +37,7 @@ function draw() {
         }
         
         if (showGraph) {
-            draw_graph(sound_log, 60, 20, 400, 300, volume_plot_color, "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
+            draw_graph(sound_log, 60, 200, 400, 300, volume_plot_color, "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
                 "Now", "T-5", max_volume, "0");
         }
     }
