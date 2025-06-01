@@ -1,22 +1,27 @@
 let audioContext, analyser, dataArray;
-
 let volume = 0;
 let micStarted = false;
 let graph_button;
-let showGraph = false; 
+let showGraph = false;
 let sound_log = [];
+let volume_plot_color;
+
 const log_length_time = 5;
-max_volume = 55;
+const max_volume = 55;
+let frequencyData;
 
 function setup() {
-    start_microphone();
     createCanvas(windowWidth, windowHeight);
     textAlign(CENTER, CENTER);
     textSize(18);
+
     volume_plot_color = color(1, 50, 32);
-    graph_button = createButton("Click HERE for SOUND GRAPH");
+
+    graph_button = createButton("Sound Test");
     graph_button.position(530, 25);
     graph_button.mouseClicked(toggleGraph);
+
+    start_microphone();
 }
 
 function draw() {
@@ -32,24 +37,58 @@ function draw() {
         }
 
         if (volume > max_volume) {
-            //max_volume = volume;
+            // Uncomment if you want auto-scaling
+            // max_volume = volume;
             console.log("max_volume = " + max_volume);
         }
-        
+
         if (showGraph) {
-            draw_graph(sound_log, 60, 200, 400, 300, volume_plot_color, "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
-                "Now", "T-5", max_volume, "0");
+            draw_graph(sound_log, 100, 200, 400, 300, volume_plot_color,
+                "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
+                "Now", "T-5", max_volume.toString(), "0");
+
+            analyser.getByteFrequencyData(frequencyData);
+            draw_fft_plot(frequencyData, 600, 250, 400, 300, color(100, 200, 255), "Live Frequency Spectrum");
         }
     }
 }
 
+async function start_microphone() {
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
+    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    await audioContext.resume();
+
+    const source = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    frequencyData = new Uint8Array(bufferLength);
+
+    source.connect(analyser);
+    micStarted = true;
+}
+
+function calculate_volume() {
+    let sumSquares = 0;
+    for (let i = 0; i < dataArray.length; i++) {
+        const val = dataArray[i] - 128;
+        sumSquares += val * val;
+    }
+    return Math.sqrt(sumSquares / dataArray.length);
+}
+
 function toggleGraph() {
-    showGraph = !showGraph; // Invert the boolean value
+    showGraph = !showGraph;
 }
 
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
     title, x_axis_title, y_axis_title,
     max_x_title, min_x_title, max_y_title, min_y_title) {
+
     let padding = 40;
     textAlign(CENTER, CENTER);
     textSize(12);
@@ -57,18 +96,17 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
 
     let xVals = data.map(d => d[0]);
     let yVals = data.map(d => d[1]);
-
     let minX = Math.min(...xVals);
     let maxX = Math.max(...xVals);
     let minY = Math.min(...yVals);
-    let maxY = max_volume; // Or Math.max(...yVals)
+    let maxY = max_volume;
 
-    // Draw axes
+    // Axes
     stroke(0);
-    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X-axis
-    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y-axis
+    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
+    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
 
-    // Plot line
+    // Graph line
     noFill();
     stroke(line_color);
     beginShape();
@@ -79,49 +117,50 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     }
     endShape();
 
-    // Titles and axis labels
+    // Labels
     textSize(20);
     fill(0);
     noStroke();
-    text(title, x_pos + width / 2, y_pos + 30); // Title above the graph
+    text(title, x_pos + width / 2, y_pos + 30);
+    text(x_axis_title, x_pos + width / 2, y_pos + height);
+    text(y_axis_title, x_pos - 30, y_pos + height / 2);
 
-    text(x_axis_title, x_pos + width / 2, y_pos + height); // X-axis title below graph
-    text(y_axis_title, x_pos - 30, y_pos + height / 2); // Y-axis title left of graph
-
-    // Axis edge labels
     textSize(12);
     text(min_x_title, x_pos + padding, y_pos + height - padding + 15);
     text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
-
     text(max_y_title, x_pos + padding - 25, y_pos + padding);
     text(min_y_title, x_pos + padding - 25, y_pos + height - padding);
 }
 
-function calculate_volume() {
-    let sumSquares = 0;
-    for (let i = 0; i < dataArray.length; i++) {
-        const val = dataArray[i] - 128;
-        sumSquares += val * val;
+function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color, title) {
+    let padding = 20;
+    let numBars = frequencyData.length;
+    let barWidth = (width - 2 * padding) / numBars;
+
+    // Axes
+    stroke(0);
+    strokeWeight(2);
+    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
+    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
+
+    // Bars
+    noStroke();
+    fill(bar_color);
+    for (let i = 0; i < numBars; i++) {
+        let amplitude = frequencyData[i];
+        let scaledHeight = map(amplitude, 0, 255, 0, height - 2 * padding);
+        rect(
+            x_pos + padding + i * barWidth,
+            y_pos + height - padding - scaledHeight,
+            barWidth,
+            scaledHeight
+        );
     }
-    volume = Math.sqrt(sumSquares / dataArray.length);
-    return volume;
-}
 
-async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true
-    });
-    /* jshint -W056 */
-    audioContext = new(window.AudioContext || window.webkitAudioContext)();
-    /* jshint +W056 */
-    await audioContext.resume();
-    const source = audioContext.createMediaStreamSource(stream);
-
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-
-    source.connect(analyser);
-    micStarted = true;
+    // Title
+    fill(0);
+    noStroke();
+    textAlign(CENTER, TOP);
+    textSize(14);
+    text(title, x_pos + width / 2, y_pos);
 }
