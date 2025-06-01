@@ -1,35 +1,25 @@
-<<<<<<< HEAD
-var volume;
-var mic;
-var audioStarted = false; // A flag to track if audio has started
-=======
 let audioContext, analyser, dataArray;
-
+let graph_button;
 let volume = 0;
 let micStarted = false;
+let showGraph = false; 
 
 let sound_log = [];
 const log_length = 200;
->>>>>>> 0d93c6c63c33ea250cc745695a83dbf1a65200b0
 
 function setup() {
     start_microphone();
     createCanvas(windowWidth, windowHeight);
-
     textAlign(CENTER, CENTER);
     textSize(18);
-    volume_plot_color = color(255, 0, 0);
+    volume_plot_color = color(1, 50, 32);
+    graph_button = createButton("Click HERE for SOUND GRAPH");
+    graph_button.position(230, 25);
+    graph_button.mouseClicked(toggleGraph);
 }
 
 function draw() {
-<<<<<<< HEAD
-    if (audioStarted) {
-        volume = mic.getLevel();
-        volume = volume * 255; // Scale to 0-255 for grayscale background
-        console.log("Volume = " + volume); // Uncomment for debugging
-        background(volume); // Use volume for grayscale background
-=======
-    background(150);
+    background(123, 63, 0);
 
     if (micStarted) {
         analyser.getByteTimeDomainData(dataArray);
@@ -39,11 +29,14 @@ function draw() {
         if (sound_log.length > log_length) {
             sound_log.shift();
         }
-        
-        draw_graph(sound_log, 20, 20, 400, 300, volume_plot_color);
->>>>>>> 0d93c6c63c33ea250cc745695a83dbf1a65200b0
-
+        if(showGraph){
+        draw_graph(sound_log, 20, 100, 900, 600, volume_plot_color);
+        }
     }
+}
+
+function toggleGraph() {
+    showGraph = !showGraph; // Invert the boolean value
 }
 
 function draw_graph(data, x_pos, y_pos, width, height, line_color) {
@@ -91,7 +84,9 @@ async function start_microphone() {
     const stream = await navigator.mediaDevices.getUserMedia({
         audio: true
     });
+    /* jshint -W056 */
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    /* jshint +W056 */
     await audioContext.resume();
     const source = audioContext.createMediaStreamSource(stream);
 
