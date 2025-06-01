@@ -1,6 +1,6 @@
-let volume;
-let mic;
-let audioStarted = false; // A flag to track if audio has started
+var volume;
+var mic;
+var audioStarted = false; // A flag to track if audio has started
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -22,7 +22,7 @@ function draw() {
     if (audioStarted) {
         volume = mic.getLevel();
         volume = volume * 255; // Scale to 0-255 for grayscale background
-        // console.log("Volume = " + volume); // Uncomment for debugging
+        console.log("Volume = " + volume); // Uncomment for debugging
         background(volume); // Use volume for grayscale background
 
         // Display the text after audio has started
