@@ -54,7 +54,7 @@ function draw() {
         }
     }
 }
-
+// jshint ignore:start
 async function start_microphone() {
     const stream = await navigator.mediaDevices.getUserMedia({
         audio: true
@@ -74,6 +74,7 @@ frequencyData = new Uint8Array(bufferLength);
 source.connect(analyser);
 micStarted = true;
 }
+// jshint ignore:end
 
 function calculate_volume() {
     let sumSquares = 0;

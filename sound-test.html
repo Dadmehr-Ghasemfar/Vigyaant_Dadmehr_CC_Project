@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musication - Sound Test</title>
+    <!-- p5.js Library - Required for your JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <style>
+        /* CSS RESET AND BASE STYLES */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden; /* Prevent scrollbars since p5.js manages the canvas */
+        }
+
+        /* HEADER AND NAVIGATION - Fixed positioning over p5.js canvas */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(15px);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo::before {
+            content: '🎵';
+            font-size: 1.8rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+
+        .nav-links a:hover::before {
+            left: 0;
+        }
+
+        /* INSTRUCTIONS OVERLAY */
+        .instructions {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 1rem;
+            border-radius: 10px;
+            z-index: 999;
+            max-width: 300px;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .instructions h3 {
+            color: #4ecdc4;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .instructions ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .instructions li {
+            margin-bottom: 0.3rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .instructions li::before {
+            content: '🎧';
+            position: absolute;
+            left: 0;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .instructions {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                max-width: none;
+                font-size: 0.8rem;
+            }
+        }
+
+        /* P5.JS CANVAS STYLING */
+        main {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Override p5.js default styling */
+        canvas {
+            display: block !important;
+        }
+
+        /* CUSTOM BUTTON STYLING for p5.js buttons */
+        button {
+            background: linear-gradient(45deg, #4ecdc4, #45b7d1) !important;
+            border: none !important;
+            padding: 0.8rem 1.5rem !important;
+            border-radius: 25px !important;
+            color: white !important;
+            font-weight: bold !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease !important;
+            font-family: 'Arial', sans-serif !important;
+            font-size: 14px !important;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.3) !important;
+        }
+
+        button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.5) !important;
+            background: linear-gradient(45deg, #45b7d1, #4ecdc4) !important;
+        }
+
+        button:active {
+            transform: translateY(0px) !important;
+        }
+
+        /* LOADING INDICATOR */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 1.2rem;
+            z-index: 1001;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 2rem;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading::before {
+            content: '🎵';
+            display: block;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* PERMISSION NOTICE */
+        .permission-notice {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 193, 7, 0.95);
+            color: #333;
+            padding: 1rem 2rem;
+            border-radius: 10px;
+            z-index: 1001;
+            text-align: center;
+            max-width: 400px;
+            border: 2px solid #ffc107;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .permission-notice strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Musication</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sound-test.html">Sound Test</a></li>
+                <li><a href="practice.html">Practice</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT - p5.js will create canvas here -->
+    <main id="p5-container">
+        <!-- p5.js canvas will be inserted here -->
+    </main>
+
+    <!-- LOADING INDICATOR -->
+    <div class="loading" id="loading">
+        Loading Sound Test...
+    </div>
+
+    <!-- PERMISSION NOTICE -->
+    <div class="permission-notice" id="permission-notice" style="display: none;">
+        <strong>🎤 Microphone Access Required</strong>
+        Please allow microphone access to start the sound test. Your audio data stays on your device and is not recorded.
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="instructions">
+        <h3>🎧 Sound Test Controls</h3>
+        <ul>
+            <li>Click "Sound Test" to toggle graphs</li>
+            <li>Volume visualization in real-time</li>
+            <li>Live frequency spectrum analysis</li>
+            <li>Use headphones for best results</li>
+            <li>Speak or make sounds to test</li>
+        </ul>
+    </div>
+
+    <!-- Your p5.js script -->
+    <script>
+        // Global variable to store sampling rate (used in your code)
+        let sampling_rate;
+       
+        // Hide loading indicator once p5.js starts
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Show permission notice
+        function showPermissionNotice() {
+            const notice = document.getElementById('permission-notice');
+            if (notice) {
+                notice.style.display = 'block';
+                setTimeout(() => {
+                    notice.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Override the p5.js setup function to add our enhancements
+        const originalSetup = window.setup;
+        window.setup = function() {
+            if (originalSetup) {
+                originalSetup();
+            }
+            hideLoading();
+           
+            // Show permission notice when microphone access is needed
+            showPermissionNotice();
+        };
+
+        // Header scroll effect
+        let lastScrollY = window.scrollY;
+        const header = document.querySelector('header');
+
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+           
+            if (currentScrollY > 100) {
+                header.style.background = 'rgba(0, 0, 0, 0.95)';
+            } else {
+                header.style.background = 'rgba(0, 0, 0, 0.9)';
+            }
+           
+            lastScrollY = currentScrollY;
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            switch(e.key.toLowerCase()) {
+                case 'h': // Home
+                    window.location.href = 'index.html';
+                    break;
+                case 'p': // Practice
+                    window.location.href = 'practice.html';
+                    break;
+                case 'a': // About
+                    window.location.href = 'about.html';
+                    break;
+                case ' ': // Space to toggle graph
+                    e.preventDefault();
+                    if (window.toggleGraph) {
+                        window.toggleGraph();
+                    }
+                    break;
+            }
+        });
+
+        // Console welcome message
+        console.log(`
+        🎧 Sound Test with p5.js Loaded! 🎧
+       
+        Features:
+        - Real-time volume monitoring
+        - Live frequency spectrum analysis
+        - Interactive controls
+        - Professional audio visualization
+       
+        Controls:
+        - Click "Sound Test" button to toggle graphs
+        - Space bar: Toggle graph display
+        - H: Home, P: Practice, A: About
+       
+        Make sure to allow microphone access! 🎤
+        `);
+    </script>
+
+    <!-- Your sound-test.js file -->
+    <script src="sound-test.js"></script>
+</body>
+</html>
+<body>
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Musication</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sound-test.html">Sound Test</a></li>
+                <li><a href="practice.html">Practice</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Your sound-test.js file -->
+    <script src="your-existing-sound-test.js"></script>
+</body>
+
+
+    <script src="sound-test.js"></script>
+
