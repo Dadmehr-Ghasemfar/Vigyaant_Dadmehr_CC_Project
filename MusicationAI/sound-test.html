@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musication - Sound Test</title>
+    <!-- p5.js Library - Required for your JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Musication</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sound-test.html">Sound Test</a></li>
+                <!--<li><a href="practice.html">Practice</a></li> -->
+               <!-- <li><a href="about.html">About</a></li> -->
+            </ul>
+        </nav>
+    </header>
+
+    <!-- MAIN CONTENT - p5.js will create canvas here -->
+    <main id="p5-container">
+        <!-- p5.js canvas will be inserted here -->
+    </main>
+
+    <!-- LOADING INDICATOR -->
+    <div class="loading" id="loading">
+        Loading Sound Test...
+    </div>
+
+    <!-- PERMISSION NOTICE -->
+    <div class="permission-notice" id="permission-notice" style="display: none;">
+        <strong>🎤 Microphone Access Required</strong>
+        Please allow microphone access to start the sound test. Your audio data stays on your device and is not recorded.
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="instructions">
+        <h3>🎧 Sound Test Controls</h3>
+        <ul>
+            <li>Click "Sound Test" to toggle graphs</li>
+            <li>Volume visualization in real-time</li>
+            <li>Live frequency spectrum analysis</li>
+            <li>Use headphones for best results</li>
+            <li>Speak or make sounds to test</li>
+        </ul>
+    </div>
+
+    <!-- Your p5.js script -->
+    <script>
+        // Global variable to store sampling rate (used in your code)
+        let sampling_rate;
+       
+        // Hide loading indicator once p5.js starts
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Show permission notice
+        function showPermissionNotice() {
+            const notice = document.getElementById('permission-notice');
+            if (notice) {
+                notice.style.display = 'block';
+                setTimeout(() => {
+                    notice.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Override the p5.js setup function to add our enhancements
+        const originalSetup = window.setup;
+        window.setup = function() {
+            if (originalSetup) {
+                originalSetup();
+            }
+            hideLoading();
+           
+            // Show permission notice when microphone access is needed
+            showPermissionNotice();
+        };
+
+        // Header scroll effect
+        let lastScrollY = window.scrollY;
+        const header = document.querySelector('header');
+
+        window.addEventListener('scroll', () => {
+            const currentScrollY = window.scrollY;
+           
+            if (currentScrollY > 100) {
+                header.style.background = 'rgba(0, 0, 0, 0.95)';
+            } else {
+                header.style.background = 'rgba(0, 0, 0, 0.9)';
+            }
+           
+            lastScrollY = currentScrollY;
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            switch(e.key.toLowerCase()) {
+                case 'h': // Home
+                    window.location.href = 'index.html';
+                    break;
+                case 'p': // Practice
+                    window.location.href = 'practice.html';
+                    break;
+                case 'a': // About
+                    window.location.href = 'about.html';
+                    break;
+                case ' ': // Space to toggle graph
+                    e.preventDefault();
+                    if (window.toggleGraph) {
+                        window.toggleGraph();
+                    }
+                    break;
+            }
+        });
+
+        // Console welcome message
+        console.log(`
+        🎧 Sound Test with p5.js Loaded! 🎧
+       
+        Features:
+        - Real-time volume monitoring
+        - Live frequency spectrum analysis
+        - Interactive controls
+        - Professional audio visualization
+       
+        Controls:
+        - Click "Sound Test" button to toggle graphs
+        - Space bar: Toggle graph display
+        - H: Home, P: Practice, A: About
+       
+        Make sure to allow microphone access! 🎤
+        `);
+    </script>
+
+    <!-- Your sound-test.js file -->
+    <script src="sound-test.js"></script>
+</body>
+</html>
+<body>
+    <!-- HEADER -->
+    <header>
+        <nav>
+            <a href="index.html" class="logo">Musication</a>
+            <ul class="nav-links">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="sound-test.html">Sound Test</a></li>
+                <li><a href="practice.html">Practice</a></li>
+                <li><a href="about.html">About</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Your sound-test.js file -->
+    <script src="your-existing-sound-test.js"></script>
+</body>
+
+
+    <script src="sound-test.js"></script>
+
