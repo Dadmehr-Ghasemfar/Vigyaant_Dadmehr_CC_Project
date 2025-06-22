@@ -1,0 +1,24 @@
+{
+  "name": "vigyaant_dadmehr_cc_project",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Dadmehr-Ghasemfar/Vigyaant_Dadmehr_CC_Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Dadmehr-Ghasemfar/Vigyaant_Dadmehr_CC_Project/issues"
+  },
+  "homepage": "https://github.com/Dadmehr-Ghasemfar/Vigyaant_Dadmehr_CC_Project#readme",
+  "description": "",
+  "dependencies": {
+    "@tonejs/midi": "^2.0.28",
+    "tone": "^15.1.22"
+  }
+}
