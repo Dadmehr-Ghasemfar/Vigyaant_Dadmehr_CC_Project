@@ -6,6 +6,7 @@ let statusDiv;
 //const synth = new Tone.PolySynth().toDestination();
 
 // Base URL for the instrument audio samples
+<<<<<<< HEAD
 const SOUND_WEBSITE = "/audio/";
 // Configuration for instruments, mapping MIDI program numbers to sound files
 const instrumentConfigs = {
@@ -75,6 +76,21 @@ const instrumentConfigs = {
     0: { // Acoustic Grand Piano (MIDI Program 0) - Often used as a primary accompaniment/practice instrument
         name: 'Piano',
         soundFile: 'piano/C4.mp3', // Make sure you have audio/piano/C4.mp3
+=======
+const SOUND_WEBSITE = "https://raw.githubusercontent.com/vjain3024/Vigyaant_Dadmehr_CC_Project/main/audio/";
+
+// Configuration for instruments, mapping MIDI program numbers to sound files
+const instrumentConfigs = {
+    // RE-ADD ALL YOUR INSTRUMENTS HERE
+    0: { // Piano (You'll need a piano sample, e.g., Salamander)
+        name: 'Piano',
+        soundFile: 'piano/C4.mp3', // Adjust based on your piano sample filename
+        noteKey: 'C4'
+    },
+    24: { // Guitar (From Philharmonia, assuming you have C4.mp3 in audio/guitar)
+        name: 'Guitar',
+        soundFile: 'guitar/C4.mp3', // Match your exact filename in audio/guitar/
+>>>>>>> 473c2ce77be6e7317fdb3e3f4cc27994d83f8271
         noteKey: 'C4'
     }
 };
@@ -156,7 +172,11 @@ async function initializeInstruments() {
 document.addEventListener("DOMContentLoaded", initializeInstruments);
 
 async function LoadandPlayMidi() {
+<<<<<<< HEAD
     const response = await fetch(".mid");
+=======
+    const response = await fetch("Music/Coldplay - Viva La Vida.mid");
+>>>>>>> 473c2ce77be6e7317fdb3e3f4cc27994d83f8271
     if (!response.ok) {
         console.error("Failed To Fetch MIDI File:", response.statusText);
         statusDiv.textContent = "Failed to load MIDI file.";
@@ -205,4 +225,8 @@ async function LoadandPlayMidi() {
             );
         });
     });
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 473c2ce77be6e7317fdb3e3f4cc27994d83f8271
