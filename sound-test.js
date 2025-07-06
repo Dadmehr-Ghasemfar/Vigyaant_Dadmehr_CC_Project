@@ -54,7 +54,7 @@ function draw() {
                 peak_log = peak_log.slice(-last_n_maxima);
             }
         }
-
+        let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
         // Show graphs
         if (showGraph) {
             draw_graph(
@@ -65,7 +65,8 @@ function draw() {
                 "Time (s)",
                 "Volume (RMS)",
                 "Now", "T-5", max_volume.toString(), "0",
-                peak_log
+                peak_log,
+                avgPeakIntervalMs
             );
 
             let frequencyData = new Float32Array(analyser.frequencyBinCount);
@@ -85,8 +86,10 @@ function draw() {
 
 // jshint ignore:start
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
+    audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
     sampling_rate = audioContext.sampleRate;
 
@@ -131,11 +134,21 @@ function findLocalMaxima(data, threshold = 4) {
     return peaks;
 }
 
+function computeAveragePeakInterval(peaks) {
+    if (peaks.length < 2) return 0;
+
+    let totalInterval = 0;
+    for (let i = 1; i < peaks.length; i++) {
+        totalInterval += peaks[i][0] - peaks[i - 1][0];
+    }
+    return totalInterval / (peaks.length - 1);
+}
+
 // 🔺 Modified to plot peaks
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
     title, x_axis_title, y_axis_title,
     max_x_title, min_x_title, max_y_title, min_y_title,
-    peaks = []) {
+    peaks = [], avgInterval = 0) {
 
     let padding = 40;
     textAlign(CENTER, CENTER);
@@ -191,6 +204,13 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
     text(max_y_title, x_pos + padding - 25, y_pos + padding);
     text(min_y_title, x_pos + padding - 25, y_pos + height - padding);
+
+    if (peaks.length > 1) {
+        fill(255);
+        textSize(14);
+        let seconds = (avgInterval / 1000).toFixed(2);
+        text(`Avg Peak Interval: ${seconds}s`, x_pos + width / 2, y_pos + height + 40);
+    }
 }
 
 function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
