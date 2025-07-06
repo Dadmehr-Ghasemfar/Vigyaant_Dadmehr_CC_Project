@@ -11,7 +11,7 @@ let volume_plot_color;
 
 const log_length_time = 5;
 const max_volume = 40;
-const last_n_maxima = 15; // Number of recent peaks to display
+const last_n_maxima = 15;
 let peak_log = [];
 
 let frequencyData;
@@ -36,26 +36,23 @@ function draw() {
     if (micStarted) {
         analyser.getByteTimeDomainData(dataArray);
         volume = calculate_volume();
-
-        // Smooth volume
         smoothedVolume = alpha * volume + (1 - alpha) * smoothedVolume;
 
-        // Add to log
         sound_log.push([millis(), smoothedVolume]);
         if ((sound_log[sound_log.length - 1][0] - sound_log[0][0]) > log_length_time * 1000) {
             sound_log.shift();
         }
 
-        // Find peaks
-        let new_peaks = findLocalMaxima(sound_log);
+        let new_peaks = findLocalMaxima(sound_log, 4, 100);  // threshold=4, minSeparation=100ms
         if (new_peaks.length > 0) {
             peak_log = peak_log.concat(new_peaks);
             if (peak_log.length > last_n_maxima) {
                 peak_log = peak_log.slice(-last_n_maxima);
             }
         }
+
         let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
-        // Show graphs
+
         if (showGraph) {
             draw_graph(
                 sound_log,
@@ -86,10 +83,8 @@ function draw() {
 
 // jshint ignore:start
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true
-    });
-    audioContext = new(window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
     sampling_rate = audioContext.sampleRate;
 
@@ -119,19 +114,32 @@ function toggleGraph() {
     showGraph = !showGraph;
 }
 
-// 🔺 New: Peak Detection Function
-function findLocalMaxima(data, threshold = 4) {
-    const peaks = [];
+// 🟢 Peak Detection with Min Time Separation
+function findLocalMaxima(data, threshold = 4, minSeparation = 100) {
+    const rawPeaks = [];
+
     for (let i = 1; i < data.length - 1; i++) {
         if (
             data[i][1] > data[i - 1][1] &&
             data[i][1] > data[i + 1][1] &&
             data[i][1] > threshold
         ) {
-            peaks.push(data[i]);
+            rawPeaks.push(data[i]);
         }
     }
-    return peaks;
+
+    const filteredPeaks = [];
+    let lastPeakTime = -Infinity;
+
+    for (let i = 0; i < rawPeaks.length; i++) {
+        let [time, val] = rawPeaks[i];
+        if (time - lastPeakTime >= minSeparation) {
+            filteredPeaks.push([time, val]);
+            lastPeakTime = time;
+        }
+    }
+
+    return filteredPeaks;
 }
 
 function computeAveragePeakInterval(peaks) {
@@ -144,7 +152,6 @@ function computeAveragePeakInterval(peaks) {
     return totalInterval / (peaks.length - 1);
 }
 
-// 🔺 Modified to plot peaks
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
     title, x_axis_title, y_axis_title,
     max_x_title, min_x_title, max_y_title, min_y_title,
@@ -162,12 +169,10 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     let minY = Math.min(...yVals);
     let maxY = max_volume;
 
-    // Axes
     stroke(0);
     line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
     line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
 
-    // Graph line
     noFill();
     stroke(line_color);
     beginShape();
@@ -178,7 +183,6 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     }
     endShape();
 
-    // 🔺 Peak dots
     fill(255, 0, 0);
     noStroke();
     for (let i = 0; i < peaks.length; i++) {
@@ -187,7 +191,6 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
         ellipse(x, y, 8, 8);
     }
 
-    // Labels
     textSize(20);
     fill(0);
     noStroke();
@@ -224,12 +227,10 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
     textSize(12);
     strokeWeight(2);
 
-    // Draw axes
     stroke(0);
-    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
-    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
+    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding);
+    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding);
 
-    // Draw bars
     noStroke();
     fill(bar_color);
     for (let i = 0; i < numBars; i++) {
@@ -244,7 +245,6 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
         );
     }
 
-    // Draw labels
     fill(0);
     noStroke();
     textSize(20);
