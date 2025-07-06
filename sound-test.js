@@ -1,5 +1,4 @@
-
-let audioContext, analyser, dataArray, frequencyData, detector;
+let audioContext, analyser, dataArray, frequencyData;
 let volume = 0;
 let micStarted = false;
 let graph_button;
@@ -63,9 +62,7 @@ function draw() {
 }
 
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true
-    });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
 
@@ -97,7 +94,9 @@ function smoothVolume(currentVal, prevVal, alpha = 0.2) {
 function findLocalPeaks(data, threshold = 5) {
     const peaks = [];
     for (let i = 1; i < data.length - 1; i++) {
-        if (data[i][1] > data[i - 1][1] && data[i][1] > data[i + 1][1] && data[i][1] > threshold) {
+        if (data[i][1] > data[i - 1][1] &&
+            data[i][1] > data[i + 1][1] &&
+            data[i][1] > threshold) {
             peaks.push(data[i]);
         }
     }
@@ -125,10 +124,12 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     let minY = Math.min(...yVals);
     let maxY = max_volume;
 
+    // Axes
     stroke(0);
     line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding);
     line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding);
 
+    // Line graph
     noFill();
     stroke(line_color);
     beginShape();
@@ -139,7 +140,7 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     }
     endShape();
 
-    // Draw peak points
+    // Peaks
     fill(255, 0, 0);
     noStroke();
     for (let i = 0; i < peaks.length; i++) {
