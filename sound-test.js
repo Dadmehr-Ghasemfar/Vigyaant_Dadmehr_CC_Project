@@ -1,7 +1,7 @@
 let audioContext, analyser, dataArray;
 let volume = 0;
 let smoothedVolume = 0;
-let alpha = 0.3;
+let alpha = 1.0;
 
 let micStarted = false;
 let graph_button;
