@@ -1,18 +1,14 @@
-let audioContext, analyser, dataArray, frequencyData;
+let audioContext, analyser, dataArray;
 let volume = 0;
 let micStarted = false;
 let graph_button;
 let showGraph = false;
 let sound_log = [];
-let peak_log = [];
 let volume_plot_color;
-
-let smoothedVolume = 0;
 
 const log_length_time = 5;
 const max_volume = 55;
-const peak_history_limit = 10;
-let sampling_rate;
+let frequencyData;
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
@@ -35,72 +31,58 @@ function draw() {
         analyser.getByteTimeDomainData(dataArray);
         volume = calculate_volume();
 
-        // Smooth the volume
-        smoothedVolume = smoothVolume(volume, smoothedVolume);
-
-        // Update log
-        sound_log.push([millis(), smoothedVolume]);
+        sound_log.push([millis(), volume]);
         if ((sound_log[sound_log.length - 1][0] - sound_log[0][0]) > log_length_time * 1000) {
             sound_log.shift();
         }
 
-        // Peak detection
-        let peaks = findLocalPeaks(sound_log, 5);
-        if (peaks.length > 0) {
-            peak_log = peak_log.concat(peaks);
-            if (peak_log.length > peak_history_limit) {
-                peak_log = peak_log.slice(-peak_history_limit);
-            }
+        if (volume > max_volume) {
+            // Uncomment if you want auto-scaling
+            // max_volume = volume;
+            console.log("max_volume = " + max_volume);
         }
 
         if (showGraph) {
             draw_graph(sound_log, 100, 200, 400, 300, volume_plot_color,
-                "Volume vs Time Plot", "Time (ms)", "Volume (RMS)",
-                "Now", "T-5", max_volume.toString(), "0", peak_log);
+                "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
+                "Now", "T-5", max_volume.toString(), "0");
+
+            let frequencyData = new Float32Array(analyser.frequencyBinCount);
+            analyser.getFloatFrequencyData(frequencyData);
+            let max_x_title = (sampling_rate / 2).toFixed(0) + " Hz";
+            draw_fft_plot(frequencyData, 600, 200, 400, 300, color(255, 107, 107), "Live Frequency Spectrum", "Frequency", "Magnitude", max_x_title, "0 Hz", "max dB", "min dB");
         }
     }
 }
-
+// jshint ignore:start
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
     audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
-
     sampling_rate = audioContext.sampleRate;
 
-    const source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 2048;
+const source = audioContext.createMediaStreamSource(stream);
+analyser = audioContext.createAnalyser();
+analyser.fftSize = 256;
 
-    const bufferLength = analyser.fftSize;
-    dataArray = new Uint8Array(bufferLength); 
-    frequencyData = new Uint8Array(analyser.frequencyBinCount);
+const bufferLength = analyser.frequencyBinCount;
+dataArray = new Uint8Array(bufferLength);
+frequencyData = new Uint8Array(bufferLength);
 
-    micStarted = true;
+source.connect(analyser);
+micStarted = true;
 }
+// jshint ignore:end
 
 function calculate_volume() {
     let sumSquares = 0;
     for (let i = 0; i < dataArray.length; i++) {
-        sumSquares += dataArray[i] * dataArray[i];
+        const val = dataArray[i] - 128;
+        sumSquares += val * val;
     }
     return Math.sqrt(sumSquares / dataArray.length);
-}
-
-function smoothVolume(currentVal, prevVal, alpha = 0.2) {
-    return alpha * currentVal + (1 - alpha) * prevVal;
-}
-
-function findLocalPeaks(data, threshold = 5) {
-    const peaks = [];
-    for (let i = 1; i < data.length - 1; i++) {
-        if (data[i][1] > data[i - 1][1] &&
-            data[i][1] > data[i + 1][1] &&
-            data[i][1] > threshold) {
-            peaks.push(data[i]);
-        }
-    }
-    return peaks;
 }
 
 function toggleGraph() {
@@ -109,8 +91,7 @@ function toggleGraph() {
 
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
     title, x_axis_title, y_axis_title,
-    max_x_title, min_x_title, max_y_title, min_y_title,
-    peaks = []) {
+    max_x_title, min_x_title, max_y_title, min_y_title) {
 
     let padding = 40;
     textAlign(CENTER, CENTER);
@@ -126,10 +107,10 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
 
     // Axes
     stroke(0);
-    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding);
-    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding);
+    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
+    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
 
-    // Line graph
+    // Graph line
     noFill();
     stroke(line_color);
     beginShape();
@@ -139,15 +120,6 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
         vertex(x, y);
     }
     endShape();
-
-    // Peaks
-    fill(255, 0, 0);
-    noStroke();
-    for (let i = 0; i < peaks.length; i++) {
-        let x = map(peaks[i][0], minX, maxX, x_pos + padding, x_pos + width - padding);
-        let y = map(peaks[i][1], minY, maxY, y_pos + height - padding, y_pos + padding);
-        ellipse(x, y, 8, 8);
-    }
 
     // Labels
     textSize(20);
@@ -166,4 +138,58 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
     text(max_y_title, x_pos + padding - 25, y_pos + padding);
     text(min_y_title, x_pos + padding - 25, y_pos + height - padding);
+}
+
+function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
+    title, x_axis_title, y_axis_title, max_x_title, min_x_title, max_y_title, min_y_title
+) {
+    let padding = 40;
+    let numBars = frequencyData.length;
+    let barWidth = (width - 2 * padding) / numBars;
+
+    textAlign(CENTER, CENTER);
+    textSize(12);
+    strokeWeight(2);
+
+    // Draw axes
+    stroke(0);
+    line(x_pos + padding, y_pos + height - padding, x_pos + width - padding, y_pos + height - padding); // X
+    line(x_pos + padding, y_pos + height - padding, x_pos + padding, y_pos + padding); // Y
+
+    // Draw bars
+    noStroke();
+    fill(bar_color);
+    for (let i = 0; i < numBars; i++) {
+        let db = frequencyData[i];
+        let scaledHeight = map(db, analyser.minDecibels, analyser.maxDecibels, 0, height - 2 * padding);
+        scaledHeight = max(scaledHeight, 0);
+        console.log("max dB = "+analyser.maxDecibels);
+        rect(
+            x_pos + padding + i * barWidth,
+            y_pos + height - padding - scaledHeight,
+            barWidth,
+            scaledHeight
+        );
+    }
+
+    // Draw labels
+    fill(0);
+    noStroke();
+    textSize(20);
+
+    // Titles
+    text(title, x_pos + width / 2, y_pos + 30);
+    text(x_axis_title, x_pos + width / 2, y_pos + height - padding + 30);
+    push();
+    translate(x_pos + padding - 30, y_pos + height / 2);
+    rotate(-HALF_PI);
+    text(y_axis_title, 0, 0);
+    pop();
+
+    // Min/Max axis values
+    textSize(12);
+    text(min_x_title, x_pos + padding, y_pos + height - padding + 15);
+    text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
+    text(min_y_title, x_pos + padding - 20, y_pos + height - padding);
+    text(max_y_title, x_pos + padding - 20, y_pos + padding);
 }
