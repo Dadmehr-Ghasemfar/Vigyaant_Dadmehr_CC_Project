@@ -46,9 +46,12 @@ function draw() {
         let new_peaks = findLocalMaxima(sound_log, 5, 100);  // threshold=4, minSeparation=100ms
         if (new_peaks.length > 0) {
             peak_log = peak_log.concat(new_peaks);
-            //if (peak_log.length > last_n_maxima) {
-            //    peak_log = peak_log.slice(-last_n_maxima);
-            //}
+        }
+        
+        for (i = peak_log.length-1; i >= 0; i--){
+            if (peak_log[i][0] - millis() > log_length_time*1000){
+                peak_log.splice(i, 1);
+            }
         }
         
         console.log(peak_log);
