@@ -1,7 +1,7 @@
 let audioContext, analyser, dataArray;
 let volume = 0;
 let smoothedVolume = 0;
-let alpha = 0.75;
+let alpha = 1.0;
 
 let micStarted = false;
 let graph_button;
@@ -9,9 +9,9 @@ let showGraph = false;
 let sound_log = [];
 let volume_plot_color;
 
-const log_length_time = 4;
+const log_length_time = 5;
 const max_volume = 40;
-const last_n_maxima = 5; // Number of recent peaks to display
+const last_n_maxima = 15; // Number of recent peaks to display
 let peak_log = [];
 
 let frequencyData;
@@ -117,7 +117,7 @@ function toggleGraph() {
 }
 
 // 🔺 New: Peak Detection Function
-function findLocalMaxima(data, threshold = 5) {
+function findLocalMaxima(data, threshold = 4) {
     const peaks = [];
     for (let i = 1; i < data.length - 1; i++) {
         if (
