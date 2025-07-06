@@ -73,7 +73,7 @@ async function start_microphone() {
     analyser.fftSize = 2048;
 
     const bufferLength = analyser.fftSize;
-    dataArray = new Float32Array(bufferLength);
+    dataArray = new Uint8Array(bufferLength); 
     frequencyData = new Uint8Array(analyser.frequencyBinCount);
 
     micStarted = true;
