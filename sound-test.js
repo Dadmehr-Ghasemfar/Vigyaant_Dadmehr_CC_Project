@@ -1,7 +1,3 @@
-// p5 + Web Audio + Pitchy
-import {
-    PitchDetector
-} from "https://cdn.skypack.dev/pitchy";
 
 let audioContext, analyser, dataArray, frequencyData, detector;
 let volume = 0;
@@ -11,8 +7,7 @@ let showGraph = false;
 let sound_log = [];
 let peak_log = [];
 let volume_plot_color;
-let currentPitch = null;
-let pitchNote = "";
+
 let smoothedVolume = 0;
 
 const log_length_time = 5;
@@ -50,19 +45,6 @@ function draw() {
             sound_log.shift();
         }
 
-        // Pitch detection
-        const [pitch, clarity] = detector.findPitch(dataArray);
-        if (clarity > 0.95) {
-            currentPitch = pitch;
-            pitchNote = hzToNoteName(pitch);
-        }
-
-        fill(0);
-        textSize(32);
-        if (currentPitch) {
-            text(`Pitch: ${pitchNote} (${currentPitch.toFixed(2)} Hz)`, width / 2, 80);
-        }
-
         // Peak detection
         let peaks = findLocalPeaks(sound_log, 5);
         if (peaks.length > 0) {
@@ -97,8 +79,6 @@ async function start_microphone() {
     dataArray = new Float32Array(bufferLength);
     frequencyData = new Uint8Array(analyser.frequencyBinCount);
 
-    source.connect(analyser);
-    detector = PitchDetector.forFloat32Array(sampling_rate);
     micStarted = true;
 }
 
@@ -122,16 +102,6 @@ function findLocalPeaks(data, threshold = 5) {
         }
     }
     return peaks;
-}
-
-function hzToNoteName(freq) {
-    const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-    const A4 = 440;
-    const noteNumber = 12 * (Math.log2(freq / A4)) + 69;
-    const rounded = Math.round(noteNumber);
-    const name = noteNames[rounded % 12];
-    const octave = Math.floor(rounded / 12) - 1;
-    return name + octave;
 }
 
 function toggleGraph() {
