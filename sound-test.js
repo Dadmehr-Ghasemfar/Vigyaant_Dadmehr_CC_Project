@@ -48,8 +48,8 @@ function draw() {
             peak_log = peak_log.concat(new_peaks);
         }
         
-        for (i = peak_log.length-1; i >= 0; i--){
-            if (peak_log[i][0] - millis() > log_length_time*1000){
+        for (let i = peak_log.length-1; i >= 0; i--){
+            if (millis() - peak_log[i][0] > log_length_time*1000){
                 peak_log.splice(i, 1);
             }
         }
