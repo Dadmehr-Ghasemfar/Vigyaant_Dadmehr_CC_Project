@@ -11,7 +11,7 @@ let volume_plot_color;
 
 const log_length_time = 5;
 const max_volume = 40;
-const last_n_maxima = 15;
+const last_n_maxima = 30;
 let peak_log = [];
 
 let frequencyData;
