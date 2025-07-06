@@ -1,5 +1,8 @@
 let audioContext, analyser, dataArray;
 let volume = 0;
+let smoothedVolume = 0; // <-- NEW: smoothed volume value
+let alpha = 0.2; // <-- smoothing factor (0 < alpha < 1)
+
 let micStarted = false;
 let graph_button;
 let showGraph = false;
@@ -31,14 +34,17 @@ function draw() {
         analyser.getByteTimeDomainData(dataArray);
         volume = calculate_volume();
 
-        sound_log.push([millis(), volume]);
+        // Smooth the volume using exponential moving average
+        smoothedVolume = alpha * volume + (1 - alpha) * smoothedVolume;
+
+        sound_log.push([millis(), smoothedVolume]); // use smoothedVolume instead of raw volume
         if ((sound_log[sound_log.length - 1][0] - sound_log[0][0]) > log_length_time * 1000) {
             sound_log.shift();
         }
 
-        if (volume > max_volume) {
+        if (smoothedVolume > max_volume) {
             // Uncomment if you want auto-scaling
-            // max_volume = volume;
+            // max_volume = smoothedVolume;
             console.log("max_volume = " + max_volume);
         }
 
@@ -63,16 +69,16 @@ async function start_microphone() {
     await audioContext.resume();
     sampling_rate = audioContext.sampleRate;
 
-const source = audioContext.createMediaStreamSource(stream);
-analyser = audioContext.createAnalyser();
-analyser.fftSize = 256;
+    const source = audioContext.createMediaStreamSource(stream);
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
 
-const bufferLength = analyser.frequencyBinCount;
-dataArray = new Uint8Array(bufferLength);
-frequencyData = new Uint8Array(bufferLength);
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    frequencyData = new Uint8Array(bufferLength);
 
-source.connect(analyser);
-micStarted = true;
+    source.connect(analyser);
+    micStarted = true;
 }
 // jshint ignore:end
 
@@ -163,7 +169,7 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
         let db = frequencyData[i];
         let scaledHeight = map(db, analyser.minDecibels, analyser.maxDecibels, 0, height - 2 * padding);
         scaledHeight = max(scaledHeight, 0);
-        console.log("max dB = "+analyser.maxDecibels);
+        console.log("max dB = " + analyser.maxDecibels);
         rect(
             x_pos + padding + i * barWidth,
             y_pos + height - padding - scaledHeight,
