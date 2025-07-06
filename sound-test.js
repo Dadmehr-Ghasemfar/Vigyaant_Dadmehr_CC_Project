@@ -54,7 +54,6 @@ function draw() {
             }
         }
         
-        console.log(peak_log);
         let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
 
         if (showGraph) {
@@ -150,11 +149,7 @@ function computeAveragePeakInterval(peaks) {
     if (peaks.length < 2) return 0;
 
     let totalInterval = log_length_time;
-    //for (let i = 1; i < peaks.length; i++) {
-    //    totalInterval += peaks[i][0] - peaks[i - 1][0];
-    //}
-    //console.log("total interval = "+totalInterval);
-    return (totalInterval / (peaks.length - 1));
+    return (totalInterval / (peak_log.length - 1));
 }
 
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
