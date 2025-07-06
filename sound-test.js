@@ -211,8 +211,7 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     if (peaks.length > 1) {
         fill(255);
         textSize(14);
-        let seconds = (avgInterval / 1000).toFixed(2);
-        text(`Avg Peak Interval: ${seconds}s`, x_pos + width / 2, y_pos + height + 40);
+        text(`Avg Peak Interval: ${avgInterval}s`, x_pos + width / 2, y_pos + height + 40);
     }
 }
 
