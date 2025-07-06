@@ -51,6 +51,7 @@ function draw() {
             }
         }
 
+        peak_log = peak_log.filter(p => millis() - p[0] <= log_length_time * 1000);
         let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
 
         if (showGraph) {
