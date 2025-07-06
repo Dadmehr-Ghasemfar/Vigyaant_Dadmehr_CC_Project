@@ -43,12 +43,12 @@ function draw() {
             sound_log.shift();
         }
 
-        let new_peaks = findLocalMaxima(sound_log, 4, 100);  // threshold=4, minSeparation=100ms
+        let new_peaks = findLocalMaxima(sound_log, 5, 100);  // threshold=4, minSeparation=100ms
         if (new_peaks.length > 0) {
             peak_log = peak_log.concat(new_peaks);
-            if (peak_log.length > last_n_maxima) {
-                peak_log = peak_log.slice(-last_n_maxima);
-            }
+            //if (peak_log.length > last_n_maxima) {
+            //    peak_log = peak_log.slice(-last_n_maxima);
+            //}
         }
         
         console.log(peak_log);
@@ -151,7 +151,7 @@ function computeAveragePeakInterval(peaks) {
     //    totalInterval += peaks[i][0] - peaks[i - 1][0];
     //}
     //console.log("total interval = "+totalInterval);
-    return totalInterval / (peaks.length - 1);
+    return (totalInterval / (peaks.length - 1));
 }
 
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
