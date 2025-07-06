@@ -50,8 +50,8 @@ function draw() {
                 peak_log = peak_log.slice(-last_n_maxima);
             }
         }
-
-        peak_log = peak_log.filter(p => millis() - p[0] <= log_length_time * 1000);
+        
+        console.log(peak_log);
         let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
 
         if (showGraph) {
@@ -150,6 +150,7 @@ function computeAveragePeakInterval(peaks) {
     for (let i = 1; i < peaks.length; i++) {
         totalInterval += peaks[i][0] - peaks[i - 1][0];
     }
+    console.log("total interval = "+totalInterval);
     return totalInterval / (peaks.length - 1);
 }
 
