@@ -146,11 +146,11 @@ function findLocalMaxima(data, threshold = 4, minSeparation = 100) {
 function computeAveragePeakInterval(peaks) {
     if (peaks.length < 2) return 0;
 
-    let totalInterval = 0;
-    for (let i = 1; i < peaks.length; i++) {
-        totalInterval += peaks[i][0] - peaks[i - 1][0];
-    }
-    console.log("total interval = "+totalInterval);
+    let totalInterval = log_length_time;
+    //for (let i = 1; i < peaks.length; i++) {
+    //    totalInterval += peaks[i][0] - peaks[i - 1][0];
+    //}
+    //console.log("total interval = "+totalInterval);
     return totalInterval / (peaks.length - 1);
 }
 
