@@ -43,17 +43,17 @@ function draw() {
             sound_log.shift();
         }
 
-        let new_peaks = findLocalMaxima(sound_log, 5, 100);  // threshold=4, minSeparation=100ms
+        let new_peaks = findLocalMaxima(sound_log, 5, 100); // threshold=4, minSeparation=100ms
         if (new_peaks.length > 0) {
             peak_log = peak_log.concat(new_peaks);
         }
-        
-        for (let i = peak_log.length-1; i >= 0; i--){
-            if (millis() - peak_log[i][0] > log_length_time*1000){
+
+        for (let i = peak_log.length - 1; i >= 0; i--) {
+            if (millis() - peak_log[i][0] > log_length_time * 1000) {
                 peak_log.splice(i, 1);
             }
         }
-        
+
         let avgPeakIntervalMs = computeAveragePeakInterval(peak_log);
 
         if (showGraph) {
@@ -86,8 +86,10 @@ function draw() {
 
 // jshint ignore:start
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
+    audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
     sampling_rate = audioContext.sampleRate;
 
@@ -262,3 +264,46 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
     text(min_y_title, x_pos + padding - 20, y_pos + height - padding);
     text(max_y_title, x_pos + padding - 20, y_pos + padding);
 }
+
+function hideLoading() {
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
+}
+
+function showPermissionNotice() {
+    const notice = document.getElementById('permission-notice');
+    if (notice) {
+        notice.style.display = 'block';
+        setTimeout(() => {
+            notice.style.display = 'none';
+        }, 5000);
+    }
+}
+
+// Overriding p5's setup to inject these UI features
+const originalSetup = window.setup;
+window.setup = function () {
+    if (originalSetup) originalSetup();
+    hideLoading();
+    showPermissionNotice();
+};
+
+document.addEventListener('keydown', function (e) {
+    switch (e.key.toLowerCase()) {
+        case 'h':
+            window.location.href = 'index.html';
+            break;
+        case 'p':
+            window.location.href = 'practice.html';
+            break;
+        case 'a':
+            window.location.href = 'about.html';
+            break;
+        case ' ':
+            e.preventDefault();
+            if (window.toggleGraph) window.toggleGraph();
+            break;
+    }
+});
+
+console.log(`🎧 Sound Test Ready!`);
