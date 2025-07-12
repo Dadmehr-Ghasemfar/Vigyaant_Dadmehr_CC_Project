@@ -1,31 +1,25 @@
+//Audio related variables
 let audioContext, analyser, dataArray;
 let volume = 0;
-let smoothedVolume = 0;
-let alpha = 1.0;
-
 let micStarted = false;
+//Visualization Related
 let graph_button;
 let showGraph = false;
 let sound_log = [];
 let volume_plot_color;
-
-const log_length_time = 5;
-const max_volume = 40;
-const last_n_maxima = 15; // Number of recent peaks to display
-let peak_log = [];
-
+//Configurgation For The Graph
+const log_length_time = 5;//How many seconds of volume history to keep
+const max_volume = 55;//
 let frequencyData;
-
+let playBTN;
 function setup() {
     createCanvas(windowWidth, windowHeight);
     textAlign(CENTER, CENTER);
     textSize(18);
 
     volume_plot_color = color(255, 107, 107);
-
-    graph_button = createButton("Sound Test");
-    graph_button.position(530, 25);
-    graph_button.mouseClicked(toggleGraph);
+    
+    playBTN = document.getElementById("playBTN");
 
     start_microphone();
 }
@@ -37,69 +31,48 @@ function draw() {
         analyser.getByteTimeDomainData(dataArray);
         volume = calculate_volume();
 
-        // Smooth volume
-        smoothedVolume = alpha * volume + (1 - alpha) * smoothedVolume;
-
-        // Add to log
-        sound_log.push([millis(), smoothedVolume]);
+        sound_log.push([millis(), volume]);
         if ((sound_log[sound_log.length - 1][0] - sound_log[0][0]) > log_length_time * 1000) {
             sound_log.shift();
         }
 
-        // Find peaks
-        let new_peaks = findLocalMaxima(sound_log);
-        if (new_peaks.length > 0) {
-            peak_log = peak_log.concat(new_peaks);
-            if (peak_log.length > last_n_maxima) {
-                peak_log = peak_log.slice(-last_n_maxima);
-            }
+        if (volume > max_volume) {
+            // Uncomment if you want auto-scaling
+            // max_volume = volume;
+            console.log("max_volume = " + max_volume);
         }
 
-        // Show graphs
         if (showGraph) {
-            draw_graph(
-                sound_log,
-                100, 200, 400, 300,
-                volume_plot_color,
-                "Volume vs Time Plot",
-                "Time (s)",
-                "Volume (RMS)",
-                "Now", "T-5", max_volume.toString(), "0",
-                peak_log
-            );
+            draw_graph(sound_log, 100, 200, 400, 300, volume_plot_color,
+                "Volume vs Time Plot", "Time (s)", "Volume (RMS)",
+                "Now", "T-5", max_volume.toString(), "0");
 
             let frequencyData = new Float32Array(analyser.frequencyBinCount);
             analyser.getFloatFrequencyData(frequencyData);
             let max_x_title = (sampling_rate / 2).toFixed(0) + " Hz";
-            draw_fft_plot(
-                frequencyData,
-                600, 200, 400, 300,
-                color(255, 107, 107),
-                "Live Frequency Spectrum",
-                "Frequency", "Magnitude",
-                max_x_title, "0 Hz", "max dB", "min dB"
-            );
+            draw_fft_plot(frequencyData, 600, 200, 400, 300, color(255, 107, 107), "Live Frequency Spectrum", "Frequency", "Magnitude", max_x_title, "0 Hz", "max dB", "min dB");
         }
     }
 }
-
 // jshint ignore:start
 async function start_microphone() {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true
+    });
+    audioContext = new(window.AudioContext || window.webkitAudioContext)();
     await audioContext.resume();
     sampling_rate = audioContext.sampleRate;
 
-    const source = audioContext.createMediaStreamSource(stream);
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
+const source = audioContext.createMediaStreamSource(stream);
+analyser = audioContext.createAnalyser();
+analyser.fftSize = 256;
 
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-    frequencyData = new Uint8Array(bufferLength);
+const bufferLength = analyser.frequencyBinCount;
+dataArray = new Uint8Array(bufferLength);
+frequencyData = new Uint8Array(bufferLength);
 
-    source.connect(analyser);
-    micStarted = true;
+source.connect(analyser);
+micStarted = true;
 }
 // jshint ignore:end
 
@@ -112,30 +85,29 @@ function calculate_volume() {
     return Math.sqrt(sumSquares / dataArray.length);
 }
 
+function max_vol(){
+    const rows = sound_log.length;
+    var max5svolume = 0;
+    var max5stime = 0;
+    for(var timestamp = 0; timestamp < rows; timestamp++){
+        if(sound_log[timestamp][1] >= max5svolume){
+            max5stime = sound_log[timestamp][0];
+            max5svolume = sound_log[timestamp][1];
+        }
+    }
+    return { 
+        maxvolume: max5svolume,
+        maxtime: max5stime 
+    };
+}
+
 function toggleGraph() {
     showGraph = !showGraph;
 }
 
-// 🔺 New: Peak Detection Function
-function findLocalMaxima(data, threshold = 4) {
-    const peaks = [];
-    for (let i = 1; i < data.length - 1; i++) {
-        if (
-            data[i][1] > data[i - 1][1] &&
-            data[i][1] > data[i + 1][1] &&
-            data[i][1] > threshold
-        ) {
-            peaks.push(data[i]);
-        }
-    }
-    return peaks;
-}
-
-// 🔺 Modified to plot peaks
 function draw_graph(data, x_pos, y_pos, width, height, line_color,
     title, x_axis_title, y_axis_title,
-    max_x_title, min_x_title, max_y_title, min_y_title,
-    peaks = []) {
+    max_x_title, min_x_title, max_y_title, min_y_title) {
 
     let padding = 40;
     textAlign(CENTER, CENTER);
@@ -165,15 +137,6 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     }
     endShape();
 
-    // 🔺 Peak dots
-    fill(255, 0, 0);
-    noStroke();
-    for (let i = 0; i < peaks.length; i++) {
-        let x = map(peaks[i][0], minX, maxX, x_pos + padding, x_pos + width - padding);
-        let y = map(peaks[i][1], minY, maxY, y_pos + height - padding, y_pos + padding);
-        ellipse(x, y, 8, 8);
-    }
-
     // Labels
     textSize(20);
     fill(0);
@@ -191,6 +154,15 @@ function draw_graph(data, x_pos, y_pos, width, height, line_color,
     text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
     text(max_y_title, x_pos + padding - 25, y_pos + padding);
     text(min_y_title, x_pos + padding - 25, y_pos + height - padding);
+    
+    const {maxvolume, maxtime} = max_vol();
+    console.log(maxvolume);
+    fill(0, 0, 0); 
+    noStroke(); 
+    ellipse(maxvolume, maxtime, 40, 40); 
+    fill(255, 0, 0); 
+    textSize(12); text(`${(maxvolume).toFixed(1)}%`, maxX + 8, maxY - 8);
+
 }
 
 function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
@@ -216,6 +188,7 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
         let db = frequencyData[i];
         let scaledHeight = map(db, analyser.minDecibels, analyser.maxDecibels, 0, height - 2 * padding);
         scaledHeight = max(scaledHeight, 0);
+        console.log("max dB = "+analyser.maxDecibels);
         rect(
             x_pos + padding + i * barWidth,
             y_pos + height - padding - scaledHeight,
@@ -229,6 +202,7 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
     noStroke();
     textSize(20);
 
+    // Titles
     text(title, x_pos + width / 2, y_pos + 30);
     text(x_axis_title, x_pos + width / 2, y_pos + height - padding + 30);
     push();
@@ -237,9 +211,11 @@ function draw_fft_plot(frequencyData, x_pos, y_pos, width, height, bar_color,
     text(y_axis_title, 0, 0);
     pop();
 
+    // Min/Max axis values
     textSize(12);
     text(min_x_title, x_pos + padding, y_pos + height - padding + 15);
     text(max_x_title, x_pos + width - padding, y_pos + height - padding + 15);
     text(min_y_title, x_pos + padding - 20, y_pos + height - padding);
     text(max_y_title, x_pos + padding - 20, y_pos + padding);
 }
+
